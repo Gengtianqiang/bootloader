@@ -1,0 +1,30 @@
+set(CMAKE_SYSTEM_NAME Generic)
+set(CMAKE_SYSTEM_PROCESSOR arm)
+set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
+
+# Uses global PATH. Override with -DARM_GCC_ROOT=C:/path/to/toolchain.
+set(ARM_GCC_ROOT "$ENV{ARM_GCC_ROOT}" CACHE PATH "ARM GNU Toolchain root")
+set(_arm_gcc_hints)
+if(ARM_GCC_ROOT)
+    list(APPEND _arm_gcc_hints "${ARM_GCC_ROOT}/bin")
+endif()
+find_program(ARM_GCC_EXECUTABLE NAMES arm-none-eabi-gcc
+    HINTS ${_arm_gcc_hints} REQUIRED)
+get_filename_component(ARM_TOOLCHAIN_BIN "${ARM_GCC_EXECUTABLE}" DIRECTORY)
+set(CMAKE_C_COMPILER "${ARM_GCC_EXECUTABLE}")
+set(CMAKE_ASM_COMPILER "${ARM_GCC_EXECUTABLE}")
+
+# Select companion tools beside GCC to prevent mixing toolchain versions.
+find_program(CMAKE_AR NAMES arm-none-eabi-ar
+    PATHS "${ARM_TOOLCHAIN_BIN}" NO_DEFAULT_PATH REQUIRED)
+find_program(CMAKE_RANLIB NAMES arm-none-eabi-ranlib
+    PATHS "${ARM_TOOLCHAIN_BIN}" NO_DEFAULT_PATH REQUIRED)
+find_program(CMAKE_OBJCOPY NAMES arm-none-eabi-objcopy
+    PATHS "${ARM_TOOLCHAIN_BIN}" NO_DEFAULT_PATH REQUIRED)
+find_program(CMAKE_SIZE NAMES arm-none-eabi-size
+    PATHS "${ARM_TOOLCHAIN_BIN}" NO_DEFAULT_PATH REQUIRED)
+set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
+list(APPEND CMAKE_TRY_COMPILE_PLATFORM_VARIABLES ARM_GCC_ROOT)
