@@ -11,7 +11,8 @@ typedef enum {
     BOOT_ERROR_HARDFAULT = 5,
     BOOT_ERROR_MEMMANAGE = 6,
     BOOT_ERROR_BUSFAULT = 7,
-    BOOT_ERROR_USAGEFAULT = 8
+    BOOT_ERROR_USAGEFAULT = 8,
+    BOOT_ERROR_UART_DMA = 9
 } Boot_Error;
 
 /* Inspect this variable in the debugger if startup or an exception fails. */

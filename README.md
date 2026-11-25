@@ -1,137 +1,56 @@
-# STM32F407 Bootloader 基础工程
+# STM32F407ZE 串口升级 Bootloader
 
-这是面向 **STM32F407ZET6** 的 **标准外设库 SPL + Arm GNU Toolchain + CMake + Ninja** 工程。
+硬件基线为 STM32F407ZET6、8 MHz HSE、168 MHz SYSCLK、3.3 V 供电。Bootloader 使用 ST 标准外设库，应用沿用同级 `../otatest` 的 HAL 源码。板上只需 MCU 片上 Flash。
 
-当前完成第一阶段的工程骨架：启动、系统时钟、GPIO、SysTick、链接布局与构建配置。主循环每隔 500 ms 翻转 PF9/PF10。
-**尚未实现 App 跳转、串口接收固件、Flash 升级、固件校验和断电恢复。**
+## 从哪里读代码
 
-## 1. 硬件与时钟
-
-| 项目 | 当前设置 |
+| 想看什么 | 工程入口 |
 | --- | --- |
-| MCU | STM32F407ZET6，512 KiB Flash |
-| HSE | 8 MHz 外部晶振 |
-| PLL | M=8，N=336，P=2，Q=7 |
-| SYSCLK / AHB | 168 MHz |
-| APB1 / APB2 | 42 MHz / 84 MHz |
-| PLLQ 输出 | 48 MHz，仅配置时钟，未启用 USB/SDIO/RNG |
-| 演示 GPIO | PF9、PF10，推挽输出，初始低电平 |
-| SysTick | 1 ms |
-| 主循环 | 每 500 ms 翻转两路 GPIO |
+| 上电、时钟、异常 | `System/Startup/startup_stm32f40_41xxx.s`、`Core/Src/main.c` |
+| 按键、启动与升级的先后顺序 | `Tasks/Boot_Manager/boot_manager.c` |
+| 串口一包如何变成文件数据 | `Middlewares/Ymodem/ymodem.c` |
+| 长度、入口地址、CRC32、提交记录 | `Tasks/Boot_Manager/boot_image.c` |
+| 实际擦哪个扇区、如何写一个字 | `BSP/Src/bsp_flash.c` |
+| USART1、PE3 和 TIM3 | `BSP/Src/bsp_board.c` |
+| 外设清理、向量表和栈切换 | `Core/Src/boot_jump.c`、`System/Startup/boot_jump.s` |
+| 日志与底层库 | `Tasks/Debug`、`Middlewares/easylogger`、`Middlewares/Rtt`、`Drivers` |
 
-PF9/PF10 沿用原工程的 GPIO 分配。它们是否连接 LED、LED 的有效电平，请以实际板卡原理图为准。
+## 分区
 
-SPL 的 SystemInit() 在启动汇编中调用，负责配置时钟。main() 使用 SystemCoreClockUpdate() 更新软件时钟值，并检查是否为 168 MHz。
-若 HSE 未成功启动、时钟不符合预期，或出现异常，程序会停在 Error_Handler()；可用调试器查看 g_boot_error。
-
-## 2. Flash 与 SRAM
-
-| 区域 | 起始地址 | 大小 | 说明 |
+| 用途 | 首地址 | 末地址（含） | 容量 |
 | --- | --- | --- | --- |
-| Bootloader | 0x08000000 | 64 KiB | 扇区 0～3，本工程链接范围 |
-| App 预留区 | 0x08010000 | 448 KiB | 尚未创建 App 工程 |
-| 普通 SRAM | 0x20000000 | 128 KiB | 本工程数据与栈 |
-| CCM SRAM | 0x10000000 | 64 KiB | 本工程暂未映射 |
+| Bootloader，扇区 0、1 | `0x08000000` | `0x08007FFF` | 32 KiB |
+| App 镜像，扇区 2 至 7 | `0x08008000` | `0x0807FFEF` | 491504 字节 |
+| 镜像提交记录，扇区 7 末尾 | `0x0807FFF0` | `0x0807FFFF` | 16 字节 |
 
-链接脚本只允许本固件占用前 64 KiB Flash，超出时由链接器报错。栈预留 2 KiB，堆最低预留 512 B。
-此布局仅用于第一阶段的 Bootloader/App 实验，还没有预留下载暂存区或独立升级信息区。
+`Core/Inc/boot_config.h`、`System/Linker/bootloader.ld` 和 `System/Linker/otatest_app.ld` 描述相同的边界。每次安装先擦记录所在的扇区 7，然后只擦新镜像覆盖的其他 App 扇区。旧应用在安装过程中被覆盖。断电后只要记录或 CRC 无效，Bootloader 就等待重传；恢复方法是重新发送完整文件。
 
-修改分区时，需要同步修改：
+## 用 VS Code 构建、下载与发送
 
-- linker/bootloader.ld
-- User/Inc/boot_config.h
+1. 用 VS Code 打开 **bootloader 文件夹**。在 CMake Tools 中用 `CMake: Select Configure Preset` 选择 `Debug`，再执行 `CMake: Build`。产物为 `build/Debug/bootloader.elf`。用现有 F5 配置 **CMake Debug (J-Link)** 写入 Bootloader，停在 main 后按 F5 继续。
+2. 仍在这个文件夹中选择 **App-Debug** 预设，执行构建（默认目标）。它读入同级 `otatest/CMakeLists.txt` 的源文件配置，用 App 分区脚本链接，将 Cortex-M4 系统控制块的向量表基址寄存器 `SCB->VTOR` 配置为 `0x08008000`。串口发送文件是 **`build/App-Debug/otatest.bin`**。同目录的 ELF 带调试符号。直接从原 `otatest` 的默认 Debug 预设生成的 ELF 仍使用整片 Flash 布局。
+3. USB 转 3.3 V TTL 串口交叉接线：适配器 RX 接 PA9（USART1_TX），TX 接 PA10（USART1_RX），GND 接 GND。串口设置为 **115200、8N1、无流控**。升级键默认 PE3，内部上拉，按下接地；有应用时按住 PE3 再复位。首次没有有效记录时直接复位即可。
+4. 终端周期性收到字符 `C` 后，选择 **YMODEM 发送**，单次发送一个 `.bin` 文件（例如 Tera Term 的文件传送菜单）。使用支持 CRC 和结束空包的普通 YMODEM 模式；单 Bank 擦除期间 MCU 可能暂停响应，发送端对数据包的等待时间建议至少 10 秒。
+5. 接收时用 TIM3 更新标志驱动 PF9/PF10 心跳，SysTick 提供串口超时计时。日志输出到 J-Link RTT 通道 0。安装成功后自动跳转；下次复位松开 PE3 会验证并直接启动 App。单独通过 J-Link 写入 App ELF 不会生成有效的提交记录，首次联调请用第 4 步安装。
 
-## 3. 目录
-
-```text
-bootloader/
-├─ CMakeLists.txt                    固件目标、编译参数、链接脚本、产物导出
-├─ CMakePresets.json                 Debug / Release 预设
-├─ cmake/arm-none-eabi.cmake          ARM GCC 工具链定位
-├─ linker/bootloader.ld              Bootloader 的 Flash / RAM 布局
-├─ startup/startup_stm32f40_41xxx.s   配套的 GCC 启动汇编，已作项目适配
-├─ Libraries/
-│  ├─ CMakeLists.txt                 当前实际编译的 SPL 驱动列表
-│  ├─ CMSIS/                        配套 CMSIS 头文件、芯片头文件与许可
-│  └─ STM32F4xx_StdPeriph_Driver/    SPL 驱动源码与头文件
-├─ User/
-│  ├─ Inc/                          项目配置、标准库配置、中断声明
-│  └─ Src/                          main、系统时钟、中断处理
-├─ BSP/
-│  ├─ Inc/                          板级驱动接口
-│  └─ Src/                          GPIO 与毫秒节拍
-└─ .vscode/                         CMake 构建任务与编辑器配置
-```
-
-Libraries 内只复制了需要的 CMSIS 头文件/设备定义和完整 SPL 外设驱动目录，没有复制 DSP 算法源码和示例工程。
-实际参与编译的 SPL 驱动暂时只有 misc.c、stm32f4xx_rcc.c、stm32f4xx_gpio.c，其余驱动保留供后续接入。
-工程已包含自身所需库文件，不依赖原始库目录继续存在。
-
-## 4. 工具路径
-
-本机已准备的工具：
-
-- GCC 工具链根目录：C:/Tools/ArmGNU/15.2.Rel1
-- GCC 可执行目录：C:/Tools/ArmGNU/15.2.Rel1/bin
-- Ninja：C:/Tools/Ninja/ninja.exe
-- CMake：C:/Program Files/CMake/bin/cmake.exe
-
-构建默认通过 PATH 查找 ARM GCC、CMake、Ninja。工具链文件会从所选 GCC 的同一 bin 目录中查找 ar、ranlib、objcopy、size，避免混用其他版本。
-如果终端尚未识别更新后的 PATH，请重启 VS Code。
-
-也可以在首次配置时显式选择 GCC 根目录：
-
-```powershell
-cmake --preset Debug -DARM_GCC_ROOT=C:/Tools/ArmGNU/15.2.Rel1
-```
-
-SPL 宏由 Libraries/CMakeLists.txt 提供：STM32F40_41xxx、USE_STDPERIPH_DRIVER、HSE_VALUE=8000000U。
-Debug 额外启用 USE_FULL_ASSERT。
-
-## 5. 之后由你执行的构建命令
-
-创建工程时未执行 CMake 配置、编译、链接、烧录或上板测试。以下命令仅供之后手动使用：
+同样的构建操作也可从 bootloader 根目录执行：
 
 ```powershell
 cmake --preset Debug
 cmake --build --preset Debug
-
-cmake --preset Release
-cmake --build --preset Release
+cmake --preset App-Debug
+cmake --build --preset App-Debug
 ```
 
-构建成功后对应目录将产生：
+## 接收和跳转
 
-- build/Debug/bootloader.elf
-- build/Debug/bootloader.bin
-- build/Debug/bootloader.hex
-- build/Debug/bootloader.map
-- build/Debug/compile_commands.json
+- Ymodem 第 0 包给出文件名和真实字节数。首个数据包通过 CRC16、初始 MSP 和复位向量范围检查后才开始擦除。接收器按声明长度写入，尾包的协议填充不会进入镜像。收到重复序号只重发 ACK。
+- 写 Flash 采用 32 位对齐编程和逐字回读。最后一个字不足 4 字节时用 `0xFF` 补齐。文件收完后重新读取整段 Flash 算 CRC32，与接收期间计算的 CRC32 比较。
+- 记录依次写入长度、CRC32、长度按位取反值和完成标记。启动时复查记录、向量和整段 CRC32。CRC 用于检出传输或存储损坏；发送者身份认证需要另行设计。
+- 跳转前停 SysTick、复位板级外设、切回 HSI、清除 NVIC 待处理中断，并设置 `SCB->VTOR`。汇编最后设置 Cortex-M4 特殊寄存器 `CONTROL`（线程特权和栈选择）与 `MSP`（主栈指针），然后进入 App 的 Reset_Handler。
 
-Release 产物位于 build/Release。BIN 不包含地址信息，后续手动烧录本 Bootloader 的 BIN 时使用 0x08000000。
+## 构建入口
 
-VS Code 中打开 bootloader.code-workspace 或整个工程目录。Ctrl+Shift+B 对应 CMake: Build Debug，会先配置再构建。
-.vscode 中没有自动烧录任务；未创建 EIDE 的独立工程配置，也未设置调试探针类型。
+根 CMake 配置定义 Cortex-M4 编译选项、固件源文件、链接脚本和输出。`Drivers/CMakeLists.txt` 选入用到的 SPL 模块；`Middlewares/CMakeLists.txt` 构建协议与日志库。`cmake/otatest-app/CMakeLists.txt` 将 App 的源文件配置接到 OTA 构建预设。EIDE 的 Bootloader 资源配置在 `.eide/eide.yml`，输出到 `out/eide`。
 
-## 6. 添加自己的文件
-
-新增业务 .c 文件，加入根 CMakeLists.txt 的 add_executable(bootloader ...) 或 target_sources(bootloader PRIVATE ...)。
-新增头文件目录，加入 target_include_directories(bootloader PRIVATE ...)。
-
-接入新的 SPL 外设时：
-
-1. 在 Libraries/CMakeLists.txt 的 stm32_spl 目标中添加对应的驱动 .c 文件。
-2. 在 User/Inc/stm32f4xx_conf.h 中添加对应头文件。
-3. 再编写自己的板级初始化与业务逻辑。
-
-## 7. 下一阶段
-
-先验证时钟与 GPIO，再添加串口日志。之后另建从 0x08010000 链接的测试 App，完成向量表设置和可靠的 App 交接。
-在此之后再设计固件接收、Flash 擦写、固件完整性与真实性验证、升级状态和断电恢复。
-
-当前主循环始终停留在 Bootloader，不会跳转 App，也不会擦除或改写 Flash。
-
-## 8. 标准库来源与许可
-
-源文件来自用户提供的 STM32F4xx_DSP_StdPeriph_Lib_V1.9.0。该包中部分组件头注释显示 V1.8.1，是包内组件版本，保留原样。
-第三方许可与适配说明见 THIRD_PARTY.md、Package_license.md 和各组件的许可证文件。
+如果已打开的 EIDE 窗口将资源树覆盖回旧目录，先关闭这个工程的所有 VS Code 窗口。在 bootloader 根目录运行 `Copy-Item -LiteralPath .eide/step3.yml -Destination .eide/eide.yml -Force`，再重新打开工程。

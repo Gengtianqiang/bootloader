@@ -1,9 +1,13 @@
 #ifndef STM32F4XX_CONF_H
 #define STM32F4XX_CONF_H
 
-/* Add the peripheral header here and its .c file in Libraries/CMakeLists.txt. */
+/* Add the peripheral header here and its .c file in Drivers/CMakeLists.txt. */
 #include "stm32f4xx_gpio.h"
 #include "stm32f4xx_rcc.h"
+#include "stm32f4xx_usart.h"
+#include "stm32f4xx_dma.h"
+#include "stm32f4xx_tim.h"
+#include "stm32f4xx_flash.h"
 #include "misc.h"
 
 #ifdef USE_FULL_ASSERT

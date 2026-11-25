@@ -1,11 +1,11 @@
-/* STM32F407ZE: this image owns the first 64 KiB of Flash.
+/* STM32F407ZE: this image owns the first 32 KiB of Flash.
  * Ordinary SRAM: 128 KiB. The separate 64 KiB CCM is not mapped here.
- * Keep the layout consistent with User/Inc/boot_config.h.
+ * Keep the layout consistent with Core/Inc/boot_config.h.
  */
 ENTRY(Reset_Handler)
 MEMORY
 {
-    FLASH (rx)  : ORIGIN = 0x08000000, LENGTH = 64K
+    FLASH (rx)  : ORIGIN = 0x08000000, LENGTH = 32K
     RAM   (xrw) : ORIGIN = 0x20000000, LENGTH = 128K
 }
 _estack = ORIGIN(RAM) + LENGTH(RAM);
@@ -14,7 +14,7 @@ _Min_Stack_Size = 0x800;
 __StackLimit = _estack - _Min_Stack_Size;
 __boot_flash_start__ = ORIGIN(FLASH);
 __boot_flash_end__ = ORIGIN(FLASH) + LENGTH(FLASH);
-__app_flash_start__ = 0x08010000;
+__app_flash_start__ = 0x08008000;
 
 SECTIONS
 {

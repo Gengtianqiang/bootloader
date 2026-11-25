@@ -1,9 +1,13 @@
-#include "main.h"
+﻿#include "main.h"
 #include "boot_config.h"
+#include "boot_manager.h"
+#include "boot_debug.h"
 #include "bsp_led.h"
 #include "bsp_tick.h"
 
+
 volatile uint32_t g_boot_error = BOOT_ERROR_NONE;
+
 
 int main(void)
 {
@@ -19,13 +23,8 @@ int main(void)
         Error_Handler(BOOT_ERROR_SYSTICK);
     }
 
-    /* Initial milestone stays in Bootloader to verify the board heartbeat.
-     * App validation/selection/transfer belong to the next milestone.
-     */
-    for (;;) {
-        BSP_LED_ToggleAll();
-        BSP_DelayMs(BOOT_HEARTBEAT_MS);
-    }
+    Boot_DebugInit();
+    Boot_ManagerRun();
 }
 
 _Noreturn void Error_Handler(Boot_Error error)
@@ -45,3 +44,4 @@ void assert_failed(uint8_t *file, uint32_t line)
     Error_Handler(BOOT_ERROR_ASSERT);
 }
 #endif
+
