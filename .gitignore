@@ -1,0 +1,53 @@
+# CMake build trees and exported firmware artifacts
+**/build/
+**/cmake-build-*/
+**/out/
+**/bin/
+**/obj/
+**/.cmake/
+CMakeUserPresets.json
+.ninja_deps
+.ninja_log
+*.elf
+*.hex
+*.bin
+*.mot
+*.srec
+*.o
+*.obj
+*.a
+*.su
+*.map
+
+# Local EIDE state, packs, and generated component selection headers
+**/.eide/
+**/.pack/
+**/.eideignore
+**/.eide.usr.ctx.json
+**/RTE_Components.h
+*.ept
+*.eide-template
+
+# Local IDE state and logs
+**/.vscode/ipch/
+**/.vscode/.browse.VC.db*
+*.log
+*.local
+*.user
+*.userprefs
+*.code-workspace.user
+
+# Python caches and test scratch files
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+
+# OS and editor noise
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+*.swp
+*.swo
+*~

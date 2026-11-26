@@ -1,0 +1,40 @@
+{
+    "name": "bootloader-jlink-download",
+    "displayName": "J-Link Firmware Download",
+    "description": "Download Bootloader and App firmware or package an App for OTA from VS Code status bar buttons.",
+    "version": "1.2.0",
+    "publisher": "local-embedded",
+    "engines": {
+        "vscode": "^1.85.0"
+    },
+    "main": "./extension.js",
+    "activationEvents": [
+        "workspaceContains:.vscode/flash-bootloader.jlink",
+        "workspaceContains:.vscode/flash-otatest.jlink",
+        "workspaceContains:tools/Build-Step2Package.ps1"
+    ],
+    "capabilities": {
+        "untrustedWorkspaces": {
+            "supported": false
+        }
+    },
+    "contributes": {
+        "commands": [
+            {
+                "command": "localEmbedded.downloadBootloader",
+                "title": "下载 Bootloader",
+                "category": "J-Link"
+            },
+            {
+                "command": "localEmbedded.downloadOtatest",
+                "title": "下载 App",
+                "category": "J-Link"
+            },
+            {
+                "command": "localEmbedded.buildOtatestPackage",
+                "title": "生成 OTA 包",
+                "category": "OTA"
+            }
+        ]
+    }
+}

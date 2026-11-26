@@ -1,0 +1,11 @@
+{
+  "folders": [
+    {"name": "00_学习资料与实验", "path": "."},
+    {"name": "01_otatest", "path": "../otatest"},
+    {"name": "02_bootloader", "path": "../bootloader"}
+  ],
+  "settings": {
+    "cmake.useCMakePresets": "always",
+    "cmake.configureOnOpen": false
+  }
+}

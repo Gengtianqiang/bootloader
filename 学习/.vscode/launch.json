@@ -1,0 +1,35 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "01 Bootloader heartbeat (Debug)", "type": "cortex-debug", "request": "launch",
+      "servertype": "jlink", "serverpath": "D:/jlink_software/JLinkGDBServerCL.exe",
+      "device": "STM32F407ZE", "interface": "swd", "serverArgs": ["-speed", "4000"],
+      "armToolchainPath": "C:/Tools/ArmGNU/15.2.Rel1/bin",
+      "cwd": "${workspaceFolder}",
+      "executable": "${workspaceFolder}/build/Debug/firmware/bootloader/bootloader.elf",
+      "runToEntryPoint": "main", "preLaunchTask": "Course: Build Debug"
+    },
+    {
+      "name": "04 Handoff: load both images (JumpDebug)", "type": "cortex-debug", "request": "launch",
+      "servertype": "jlink", "serverpath": "D:/jlink_software/JLinkGDBServerCL.exe",
+      "device": "STM32F407ZE", "interface": "swd", "serverArgs": ["-speed", "4000"],
+      "armToolchainPath": "C:/Tools/ArmGNU/15.2.Rel1/bin",
+      "cwd": "${workspaceFolder}",
+      "executable": "${workspaceFolder}/build/JumpDebug/firmware/bootloader/bootloader.elf",
+      "loadFiles": [
+        "${workspaceFolder}/build/JumpDebug/firmware/bootloader/bootloader.elf",
+        "${workspaceFolder}/build/JumpDebug/firmware/app/app.elf"
+      ],
+      "runToEntryPoint": "main", "preLaunchTask": "Course: Build JumpDebug"
+    },
+    {
+      "name": "04 Observe installed App (attach; no download)", "type": "cortex-debug", "request": "attach",
+      "servertype": "jlink", "serverpath": "D:/jlink_software/JLinkGDBServerCL.exe",
+      "device": "STM32F407ZE", "interface": "swd", "serverArgs": ["-speed", "4000"],
+      "armToolchainPath": "C:/Tools/ArmGNU/15.2.Rel1/bin",
+      "cwd": "${workspaceFolder}",
+      "executable": "${workspaceFolder}/build/JumpDebug/firmware/app/app.elf"
+    }
+  ]
+}

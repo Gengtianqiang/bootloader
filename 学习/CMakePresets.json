@@ -1,0 +1,30 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {"major": 3, "minor": 22, "patch": 0},
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "toolchainFile": "${sourceDir}/cmake/arm-none-eabi.cmake"
+    },
+    {
+      "name": "Debug", "inherits": "base",
+      "cacheVariables": {"CMAKE_BUILD_TYPE": "Debug", "COURSE_ENABLE_APP_JUMP": false}
+    },
+    {
+      "name": "Release", "inherits": "base",
+      "cacheVariables": {"CMAKE_BUILD_TYPE": "Release", "COURSE_ENABLE_APP_JUMP": false}
+    },
+    {
+      "name": "JumpDebug", "inherits": "Debug",
+      "cacheVariables": {"COURSE_ENABLE_APP_JUMP": true}
+    }
+  ],
+  "buildPresets": [
+    {"name": "Debug", "configurePreset": "Debug", "targets": ["bootloader", "app"]},
+    {"name": "Release", "configurePreset": "Release", "targets": ["bootloader", "app"]},
+    {"name": "JumpDebug", "configurePreset": "JumpDebug", "targets": ["bootloader", "app"]}
+  ]
+}
