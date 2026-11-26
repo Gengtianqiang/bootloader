@@ -1,0 +1,37 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "CMake Debug (J-Link)",
+      "type": "cortex-debug",
+      "request": "launch",
+      "servertype": "jlink",
+      "serverpath": "D:/jlink_software/JLinkGDBServerCL.exe",
+      "serverArgs": [
+        "-speed",
+        "4000"
+      ],
+      "device": "STM32F407ZE",
+      "interface": "swd",
+      "armToolchainPath": "C:/Tools/ArmGNU/15.2.Rel1/bin",
+      "gdbPath": "C:/Tools/ArmGNU/15.2.Rel1/bin/arm-none-eabi-gdb.exe",
+      "cwd": "${workspaceFolder}",
+      "executable": "${workspaceFolder}/build/Debug/bootloader.elf",
+      "svdFile": "${workspaceFolder}/.vscode/svd/STM32F40x.svd",
+      "runToEntryPoint": "main",
+      "rttConfig": {
+        "enabled": false,
+        "address": "auto",
+        "decoders": [
+          {
+            "port": 0,
+            "type": "console",
+            "label": "Bootloader RTT",
+            "noprompt": true
+          }
+        ]
+      },
+      "preLaunchTask": "CMake: Build Debug"
+    }
+  ]
+}

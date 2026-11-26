@@ -1,0 +1,4 @@
+loadfile "build/Debug/bootloader.hex"
+r
+g
+q
