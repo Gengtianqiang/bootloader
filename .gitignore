@@ -21,12 +21,8 @@
 # IDE/editor machine-local state
 /.vscode/ipch/
 /.vscode/.browse.VC.db*
-/.eide/log/
-/.eide.usr.ctx.json
-/.eide/*.tmp
 
 # Local device packs and generated metadata
-/.pack/
 /.settings/
 /.metadata/
 

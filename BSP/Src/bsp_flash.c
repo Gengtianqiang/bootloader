@@ -6,7 +6,7 @@
 static const struct {
     uint32_t start;
     uint32_t sector;
-} app_sectors[] = {
+} image_sectors[] = {
     {0x08008000U, FLASH_Sector_2}, {0x0800C000U, FLASH_Sector_3},
     {0x08010000U, FLASH_Sector_4}, {0x08020000U, FLASH_Sector_5},
     {0x08040000U, FLASH_Sector_6}, {0x08060000U, FLASH_Sector_7}
@@ -34,24 +34,48 @@ static void end_write(uint32_t cache)
     if (cache & FLASH_ACR_ICEN) FLASH_InstructionCacheCmd(ENABLE);
 }
 
+/* First sector index in each region within image_sectors[]. */
+enum { RUN_FIRST = 0U, STAGE_FIRST = 3U };
+
+static bool erase_sectors(unsigned first, unsigned past_last, uint32_t end)
+{
+    for (unsigned i = first; i < past_last && image_sectors[i].start < end; ++i) {
+        if (FLASH_EraseSector(image_sectors[i].sector, VoltageRange_3) != FLASH_COMPLETE) {
+            return false;
+        }
+    }
+    return true;
+}
+
 bool BSP_FlashEraseImage(uint32_t length)
 {
     if (length < 8U || length > BOOT_IMAGE_MAX) return false;
     uint32_t cache = begin_write();
-    /* Remove the old commit record first. Sector 7 also holds payload for
-     * large images. Erase it exactly once, even at maximum image size. */
-    bool ok = FLASH_EraseSector(FLASH_Sector_7, VoltageRange_3) == FLASH_COMPLETE;
-    for (unsigned i = 0; ok && i + 1U < sizeof app_sectors / sizeof app_sectors[0]; ++i) {
-        if (app_sectors[i].start >= BOOT_APP_BASE + length) break;
-        ok = FLASH_EraseSector(app_sectors[i].sector, VoltageRange_3) == FLASH_COMPLETE;
-    }
+    /* The record is in sector 4. Erase it first to invalidate the old App. */
+    bool ok = FLASH_EraseSector(FLASH_Sector_4, VoltageRange_3) == FLASH_COMPLETE &&
+              erase_sectors(RUN_FIRST, STAGE_FIRST - 1U, BOOT_APP_BASE + length);
+    end_write(cache);
+    return ok;
+}
+
+bool BSP_FlashEraseStaging(uint32_t length)
+{
+    if (length == 0U || length > BOOT_PACKAGE_MAX) return false;
+    uint32_t cache = begin_write();
+    bool ok = erase_sectors(STAGE_FIRST, sizeof image_sectors / sizeof image_sectors[0],
+                            BOOT_STAGE_BASE + length);
     end_write(cache);
     return ok;
 }
 
 bool BSP_FlashWrite(uint32_t address, const uint8_t *data, uint32_t length)
 {
-    const uint32_t limit = BOOT_APP_BASE + BOOT_APP_SIZE;
+    uint32_t limit = BOOT_STAGE_BASE + BOOT_PACKAGE_MAX;
+    if (address < BOOT_RECORD_BASE) {
+        limit = BOOT_RECORD_BASE;
+    } else if (address < BOOT_STAGE_BASE) {
+        limit = BOOT_STAGE_BASE;
+    }
     if (length == 0U || (address & 3U) || address < BOOT_APP_BASE ||
         address >= limit || length > limit - address) return false;
     uint32_t cache = begin_write();

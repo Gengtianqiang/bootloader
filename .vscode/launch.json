@@ -17,7 +17,7 @@
       "gdbPath": "C:/Tools/ArmGNU/15.2.Rel1/bin/arm-none-eabi-gdb.exe",
       "cwd": "${workspaceFolder}",
       "executable": "${workspaceFolder}/build/Debug/bootloader.elf",
-      "svdFile": "${workspaceFolder}/.pack/Keil/STM32F4xx_DFP.2.14.0/CMSIS/SVD/STM32F40x.svd",
+      "svdFile": "${workspaceFolder}/.vscode/svd/STM32F40x.svd",
       "runToEntryPoint": "main",
       "rttConfig": {
         "enabled": false,

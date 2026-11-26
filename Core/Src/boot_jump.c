@@ -3,6 +3,7 @@
 #include "boot_image.h"
 #include "bsp_board.h"
 #include "stm32f4xx.h"
+#include "elog.h"
 
 /* Implemented in boot_jump.s: no C stack access after replacing MSP. */
 extern void Boot_EnterApp(uint32_t stack_top, uint32_t reset_handler)
@@ -10,6 +11,9 @@ extern void Boot_EnterApp(uint32_t stack_top, uint32_t reset_handler)
 
 uint32_t Boot_JumpToApp(void)
 {
+
+
+    elog_i("boot", "Jumping to application");
     /* IPSR is the Cortex-M4 exception number; CONTROL.nPRIV identifies
      * unprivileged Thread mode. Handoff needs privileged Thread mode. */
     if (__get_IPSR() != 0U || (__get_CONTROL() & 1U) || !Boot_ImageValid()) {

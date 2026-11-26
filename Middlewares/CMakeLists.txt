@@ -1,6 +1,10 @@
-add_library(ymodem STATIC Ymodem/ymodem.c)
-target_include_directories(ymodem PUBLIC Ymodem)
+add_library(ymodem STATIC Ymodem/Current/boot_ymodem.c)
+target_include_directories(ymodem PUBLIC Ymodem/Current)
 target_link_libraries(ymodem PRIVATE mcu_options)
+
+add_library(step2_aes STATIC AES/AES.c)
+target_include_directories(step2_aes PUBLIC AES)
+target_link_libraries(step2_aes PRIVATE mcu_options)
 
 add_library(boot_log STATIC
     easylogger/src/elog.c

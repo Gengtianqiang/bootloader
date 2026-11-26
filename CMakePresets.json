@@ -26,13 +26,6 @@
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release"
             }
-        },
-        {
-            "name": "App-Debug",
-            "inherits": "Debug",
-            "cacheVariables": {
-                "BUILD_OTATEST_APP": "ON"
-            }
         }
     ],
     "buildPresets": [
@@ -43,10 +36,6 @@
         {
             "name": "Release",
             "configurePreset": "Release"
-        },
-        {
-            "name": "App-Debug",
-            "configurePreset": "App-Debug"
         }
     ]
 }

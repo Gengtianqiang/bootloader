@@ -36,5 +36,9 @@ License files:
 
 - Middlewares/Rtt contains SEGGER RTT from the reference Bootloader_Test. Original notices are retained.
 - Middlewares/easylogger contains Armink's MIT-licensed synchronous logger. elog_cfg.h and the RTT port are adapted for this board.
-- System/Linker/otatest_app.ld is derived from the sibling otatest/STM32F407xx_FLASH.ld. Only the Flash region is relocated and shortened.
+- Middlewares/Ymodem contains the four original Step3 Ymodem source files (ymodem.c, ymodem.h, common.c and common.h), byte for byte. The firmware target uses the project implementation under Middlewares/Ymodem/Current.
 - The board transport, bounded Ymodem receiver, Flash image record and boot manager are project implementations for STM32F407ZE.
+
+## Step2 decryption
+
+- Middlewares/AES/AES.c and AES.h come from 14_App_Decryption_Transfe_Step2/Bootloader. The AES source include uses the on-disk header case for cross-platform builds.

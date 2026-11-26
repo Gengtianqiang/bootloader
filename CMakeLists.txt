@@ -26,12 +26,6 @@ target_link_options(mcu_options INTERFACE
     -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=hard
 )
 
-option(BUILD_OTATEST_APP "Build the sibling HAL application for serial update" OFF)
-if(BUILD_OTATEST_APP)
-    add_subdirectory(cmake/otatest-app)
-    return()
-endif()
-
 add_subdirectory(Drivers)
 add_subdirectory(Middlewares)
 add_executable(bootloader
@@ -53,7 +47,7 @@ set_target_properties(bootloader PROPERTIES SUFFIX ".elf")
 target_include_directories(bootloader PRIVATE
     Core/Inc BSP/Inc Tasks/Boot_Manager Tasks/Debug
 )
-target_link_libraries(bootloader PRIVATE stm32_spl ymodem boot_log m)
+target_link_libraries(bootloader PRIVATE stm32_spl ymodem step2_aes boot_log m)
 
 # Linker scripts belong to firmware targets, not to the common toolchain.
 set(BOOT_LINKER_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/System/Linker/bootloader.ld")
