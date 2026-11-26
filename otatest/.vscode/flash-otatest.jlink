@@ -1,0 +1,4 @@
+loadfile "build/App-Debug/otatest.jlink.hex"
+r
+g
+q
